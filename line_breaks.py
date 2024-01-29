@@ -1,4 +1,5 @@
 import openpyxl
+from openpyxl import load_workbook
 import os
 
 
@@ -32,34 +33,60 @@ def line_breaks(dir_path_):
         wb.save(rf'{dir_path_}\{table}')
 
 
+def find_column_num(name, sheet):
+    for col_names in sheet.iter_rows(min_row=1, max_row=1, min_col=0, max_col=300):
+        col_num = 0
+        for col in col_names:
+            col_num += 1
+            column_name = col.value[:-1] if col.value and col.value[-1] == ' ' else col.value
+            if name == column_name:
+                return col_num
+
+
+def cell_replace(col_num, column_name, sheet, book, table, name_old, name_new):
+    if column_name == name_old:
+        sheet.cell(row=1, column=col_num).value = name_new
+        book.save(fr'C:\Users\Administrator\Desktop\Таблицы\Готовые к загрузке\{table}')
+        column_name = name_new
+        return column_name
+
+
 def union_table(dir_path_):
     union_table_path = 'Объединение таблиц.xlsx'
     files = os.path.exists(rf'{dir_path_}\{union_table_path}')
     if not files:
         union_wb = openpyxl.Workbook()
     else:
-        union_wb = openpyxl.load_workbook(rf'{dir_path_}\{union_table_path}')
+        union_wb = load_workbook(rf'{dir_path_}\{union_table_path}')
     union_ws = union_wb.active
 
     files = os.listdir(dir_path_)
-    list_tables = [file for file in files if ".xlsx" in file]
+    list_tables = [file for file in files if ".xlsx" in file and 'копия' not in file]
 
-    row_to_start = union_ws.max_row + 1
     for table in list_tables:
+        row_to_start = union_ws.max_row + 1
         union_table_cols_list = [col[0] for col in union_ws.iter_cols(min_row=1, max_row=1, values_only=True) if col[0]]
         quantity_cols = len(union_table_cols_list)+1
 
         wb = openpyxl.load_workbook(f'{dir_path_}/{table}')
         ws = wb.active
         curr_table_cols_list = []
+        col_num = 0
         for col in ws.iter_cols(min_row=1, max_row=1, values_only=True):
+            col_num += 1
             if col[0]:
                 column_name = col[0]
                 if column_name[-1] == ' ':
                     column_name = column_name[:-1]
+                if column_name in ['Ссылка на фото', 'Код', 'Название']:
+                    column_name = cell_replace(col_num, column_name, ws, wb, table, 'Ссылка на фото', 'Ссылки на фото')
+                    column_name = cell_replace(col_num, column_name, ws, wb, table, 'Код', 'Код товара')
+                    column_name = cell_replace(col_num, column_name, ws, wb, table, 'Название', 'Наименование')
+                # if column_name == 'Ссылка на фото':
+                #     ws.cell(row=1, column=col_num).value = 'Ссылки на фото'
+                #     wb.save(f'{dir_path_}/{table}')
+                #     column_name = 'Ссылки на фото'
                 curr_table_cols_list.append(column_name)
-
-
 
         for column_name in curr_table_cols_list:
             if column_name[-1] == ' ':
@@ -73,14 +100,16 @@ def union_table(dir_path_):
 
         for column_name in union_table_cols_list:
             if column_name in curr_table_cols_list:
-                column_num = curr_table_cols_list.index(column_name)+1
+                column_num = union_table_cols_list.index(column_name)+1
 
                 curr_row = row_to_start
-                for values in ws.iter_cols(min_row=2, max_row=ws.max_row, min_col=column_num, max_col=column_num):
-                    for value in values:
-                        if value.value:
-                            union_ws.cell(row=curr_row, column=column_num).value = value.value
-                        curr_row += 1
+                curr_table_col_num = find_column_num(name=column_name, sheet=ws)
+                if curr_table_col_num:
+                    for values in ws.iter_cols(min_row=2, max_row=ws.max_row, min_col=curr_table_col_num, max_col=curr_table_col_num):
+                        for value in values:
+                            if value.value:
+                                union_ws.cell(row=curr_row, column=column_num).value = value.value
+                            curr_row += 1
 
         union_wb.save(rf'{dir_path_}\{union_table_path}')
 
