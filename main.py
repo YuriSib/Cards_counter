@@ -3,62 +3,91 @@ import openpyxl
 from datetime import datetime
 
 
-def card_counter(path):
-    path_to_count = r'C:\Users\Administrator\Desktop\Таблицы\учет карточек.xlsx'
-    table_list = [table for table in os.listdir(path) if '.xlsx']
+def sorted_date(path_to_dir, path_to_table, wb, ws):
+    date_format = "%d.%m.%y"
 
-    wb_cnt = openpyxl.load_workbook(path_to_count)
+    table_list = [table for table in os.listdir(path_to_dir) if '.xlsx' in table and '~$' not in table]
+    date_table_list_ = [
+        (table, table.split('(')[1].replace(").xlsx", '').replace(" ", '')) for table in table_list]
+
+    date_string_list = [table.split('(')[1].replace(").xlsx", '').replace(" ", '') for table in table_list]
+    date_list = [datetime.strptime(date_string, date_format).date() for date_string in date_string_list]
+
+    sorted_date_list = sorted(date_list)
+    sorted_date_str_list = [date.strftime(date_format) for date in sorted_date_list]
+    sorted_unique_date_list = []
+    for item in sorted_date_str_list:
+        if item not in sorted_unique_date_list:
+            sorted_unique_date_list.append(item)
+
+    date_row = 1
+    for date in sorted_unique_date_list:
+        date_row += 1
+        ws.cell(row=date_row, column=3).value = date
+    wb.save(path_to_table)
+    return dict(date_table_list_), sorted_unique_date_list
+
+
+def card_count(ws):
+    column_num = 1
+    for column in range(1, 10):
+        desc_column = ws.cell(row=1, column=column).value
+        if 'писание' in desc_column:
+            column_num = column
+            break
+
+    num_rows = ws.max_row
+
+    row_num = 0
+    for row in range(2, num_rows):
+        desc_row = ws.cell(row=row, column=column_num).value
+        if desc_row:
+            row_num += 1
+    return row_num + 1
+
+
+def table_counter(path, employee_):
+    accounting_table = fr'C:\Users\Administrator\Desktop\Таблицы\Учет карточек {employee_}.xlsx'
+    table_list = [table for table in os.listdir(path) if '.xlsx' in table and '~$' not in table]
+
+    wb_cnt = openpyxl.load_workbook(accounting_table)
     ws_cnt = wb_cnt.active
 
     num_rows_in_cnt = ws_cnt.max_row
-    category_list = [ws_cnt.cell(row=row+1, column=1).value for row in range(1, num_rows_in_cnt)]
+    # category_list = [ws_cnt.cell(row=row+1, column=1).value for row in range(1, num_rows_in_cnt)]
+
+    date_table_dict, date_list = sorted_date(path_to_dir=path, path_to_table=accounting_table, wb=wb_cnt, ws=ws_cnt)
 
     for table in table_list:
-        if '~$' in table or '.ini' in table:
-            continue
         path_to_table = rf'{path}\{table}'
-        wb = openpyxl.load_workbook(path_to_table)
+        try:
+            wb = openpyxl.load_workbook(path_to_table)
+        except ValueError:
+            print(f'Не удалось прочитать таблицу {table}')
+            continue
         ws = wb.active
 
-        column_num = 1
-        for column in range(1, 8):
-            desc_column = ws.cell(row=1, column=column).value
-            if 'писание' in desc_column:
-                column_num = column
-                break
+        rows_num = card_count(ws)
+        row_in_accounting_table = date_list.index(table.split('(')[1].replace(").xlsx", '').replace(" ", '')) + 2
 
-        num_rows = ws.max_row
-
-        row_num = 0
-        for row in range(2, num_rows):
-            desc_row = ws.cell(row=row, column=column_num).value
-            if desc_row:
-                row_num += 1
-
-        category_name = table.replace('.xlsx', '')
-        if 'Олеся' in path:
-            cnt_column = 1
-        elif 'Вика' in path:
-            cnt_column = 2
-
-        last_modified_time = os.stat(rf'{path}\{table}').st_mtime
-        date = datetime.fromtimestamp(last_modified_time).strftime('%d.%m.%Y')
-        if category_name in category_list:
-            idx = category_list.index(category_name) + 2
-            ws_cnt[idx][cnt_column].value = row_num
-            ws_cnt[idx][3].value = date
+        cell = ws_cnt.cell(row=row_in_accounting_table, column=2).value
+        if cell:
+            ws_cnt.cell(row=row_in_accounting_table, column=2).value = cell + rows_num
         else:
-            idx = num_rows_in_cnt + 1
-            ws_cnt[idx][cnt_column].value = row_num
-            ws_cnt[idx][0].value = category_name
-            num_rows_in_cnt += 1
-            ws_cnt[idx][3].value = date
+            ws_cnt.cell(row=row_in_accounting_table, column=2).value = rows_num
 
-        wb_cnt.save(path_to_count)
+        category_name = table.split('(')[0]
+        cell = ws_cnt.cell(row=row_in_accounting_table, column=1).value
+        if cell:
+            ws_cnt.cell(row=row_in_accounting_table, column=1).value = cell + ', ' + category_name
+        else:
+            ws_cnt.cell(row=row_in_accounting_table, column=1).value = category_name
+        wb_cnt.save(accounting_table)
 
 
 if __name__ == "__main__":
-    path_to_cards_1 = r'C:\Users\Administrator\Desktop\Общая папа\Олеся'
-    path_to_cards_2 = r'C:\Users\Administrator\Desktop\Общая папа\Вика'
-    card_counter(path_to_cards_1)
-    card_counter(path_to_cards_2)
+    list_employees = ['Вика', 'Олеся']
+    for employee in list_employees:
+        path_to_cards = fr'C:\Users\Administrator\Desktop\Общая папа\{employee}'
+        table_counter(path_to_cards, employee)
+

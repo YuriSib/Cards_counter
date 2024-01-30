@@ -78,9 +78,10 @@ def union_table(dir_path_):
                 column_name = col[0]
                 if column_name[-1] == ' ':
                     column_name = column_name[:-1]
-                if column_name in ['Ссылка на фото', 'Код', 'Название']:
+                if column_name in ['Ссылка на фото', 'Код', 'Название', 'Код товар']:
                     column_name = cell_replace(col_num, column_name, ws, wb, table, 'Ссылка на фото', 'Ссылки на фото')
                     column_name = cell_replace(col_num, column_name, ws, wb, table, 'Код', 'Код товара')
+                    column_name = cell_replace(col_num, column_name, ws, wb, table, 'Код товар', 'Код товара')
                     column_name = cell_replace(col_num, column_name, ws, wb, table, 'Название', 'Наименование')
                 # if column_name == 'Ссылка на фото':
                 #     ws.cell(row=1, column=col_num).value = 'Ссылки на фото'
@@ -89,6 +90,8 @@ def union_table(dir_path_):
                 curr_table_cols_list.append(column_name)
 
         for column_name in curr_table_cols_list:
+            if not column_name:
+                continue
             if column_name[-1] == ' ':
                 column_name = column_name[:-1]
             if column_name in union_table_cols_list:
