@@ -43,12 +43,18 @@ def find_column_num(name, sheet):
                 return col_num
 
 
-def cell_replace(col_num, column_name, sheet, book, table, name_old, name_new):
-    if column_name == name_old:
+def cell_replace(col_num, column_name, sheet, book, table):
+    incorrect_list = ['Ссылка на фото', 'Код', 'Название', 'Код товар', 'код']
+    incorrect_value = {
+        'Ссылка на фото': 'Ссылки на фото', 'Код': 'Код товара',
+        'Название': 'Наименование', 'Код товар': 'Код товара', 'код': 'Код товара'
+    }
+    if column_name in incorrect_list:
+        name_new = incorrect_value[column_name]
         sheet.cell(row=1, column=col_num).value = name_new
         book.save(fr'C:\Users\Administrator\Desktop\Таблицы\Готовые к загрузке\{table}')
-        column_name = name_new
-        return column_name
+        return name_new
+    return column_name
 
 
 def union_table(dir_path_):
@@ -78,11 +84,7 @@ def union_table(dir_path_):
                 column_name = col[0]
                 if column_name[-1] == ' ':
                     column_name = column_name[:-1]
-                if column_name in ['Ссылка на фото', 'Код', 'Название', 'Код товар']:
-                    column_name = cell_replace(col_num, column_name, ws, wb, table, 'Ссылка на фото', 'Ссылки на фото')
-                    column_name = cell_replace(col_num, column_name, ws, wb, table, 'Код', 'Код товара')
-                    column_name = cell_replace(col_num, column_name, ws, wb, table, 'Код товар', 'Код товара')
-                    column_name = cell_replace(col_num, column_name, ws, wb, table, 'Название', 'Наименование')
+                column_name = cell_replace(col_num, column_name, ws, wb, table)
                 # if column_name == 'Ссылка на фото':
                 #     ws.cell(row=1, column=col_num).value = 'Ссылки на фото'
                 #     wb.save(f'{dir_path_}/{table}')
@@ -118,5 +120,5 @@ def union_table(dir_path_):
 
 
 if __name__ == "__main__":
-    # line_breaks(r'C:\Users\Administrator\Desktop\Таблицы\Готовые к загрузке')
+    line_breaks(r'C:\Users\Administrator\Desktop\Таблицы\Готовые к загрузке')
     union_table(r'C:\Users\Administrator\Desktop\Таблицы\Готовые к загрузке')

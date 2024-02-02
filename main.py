@@ -28,13 +28,16 @@ def sorted_date(path_to_dir, path_to_table, wb, ws):
     return dict(date_table_list_), sorted_unique_date_list
 
 
-def card_count(ws):
+def card_count(ws, table):
     column_num = 1
     for column in range(1, 10):
         desc_column = ws.cell(row=1, column=column).value
-        if 'писание' in desc_column:
-            column_num = column
-            break
+        try:
+            if 'писание' in desc_column:
+                column_num = column
+                break
+        except TypeError as e:
+            print(f'Ошибка {e} возникла в {table}')
 
     num_rows = ws.max_row
 
@@ -67,7 +70,7 @@ def table_counter(path, employee_):
             continue
         ws = wb.active
 
-        rows_num = card_count(ws)
+        rows_num = card_count(ws, table)
         row_in_accounting_table = date_list.index(table.split('(')[1].replace(").xlsx", '').replace(" ", '')) + 2
 
         cell = ws_cnt.cell(row=row_in_accounting_table, column=2).value

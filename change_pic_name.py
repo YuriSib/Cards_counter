@@ -40,20 +40,22 @@ class ExcelWork:
 
         row_num = 1
         for row in ws.iter_rows(min_col=link_col_num + 1, max_col=link_col_num + 1, min_row=2, values_only=True):
+            product_links = None
             if None in row:
                 row_num += 1
-                continue
-            row_num += 1
-            if row[0]:
-                product_links = [link.strip() for link in row[0].split(',')]
-            else:
                 product_links = 0
+            if product_links != 0:
+                row_num += 1
+                if row[0]:
+                    product_links = [link.strip() for link in row[0].split(',')]
+                else:
+                    product_links = 0
 
             product_code = ws.cell(row_num, code_col_num + 1).value
             self.old_link_dict[product_code] = product_links
         return self.old_link_dict
 
-    def links_rename(self, table_path_, photo_dir_path=None):
+    def links_rename(self, table_path_):
         if self.old_link_dict:
             wb = openpyxl.load_workbook(table_path_)
             ws = wb.active
@@ -92,7 +94,7 @@ class ExcelWork:
 
 if __name__ == "__main__":
     table_dir_path = 'таблицы'
-    # photo_dir_path_ = 'polezniemelochi.ru/wp-content/uploads/photo'
+    photo_dir_path_ = 'polezniemelochi.ru/wp-content/uploads/photo'
     files = os.listdir(table_dir_path)
     # Для тестирования вне сервера
     # files = os.listdir()
