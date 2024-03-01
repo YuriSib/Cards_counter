@@ -8,20 +8,16 @@ def compress_images(input_folder, output_folder, target_size=(270, 240)):
         os.makedirs(output_folder)
 
         # Получаем список файлов входной папки
-        input_files = os.listdir(input_folder)
-
-        for input_file in input_files:
-            input_path = os.path.join(input_folder, input_file)
-            output_path = os.path.join(output_folder, input_file)
-
-            # Открываем изображение
-            img = Image.open(input_path)
-
-            # Масштабируем изображение до целевого размера
-            img.thumbnail(target_size)
-
-            # Сохраняем сжатое изображение
-            img.save(output_path)
+    input_files = os.listdir(input_folder)
+    for input_file in input_files:
+        input_path = os.path.join(input_folder, input_file)
+        output_path = os.path.join(output_folder, input_file)
+        # Открываем изображение
+        img = Image.open(input_path)
+        # Масштабируем изображение до целевого размера
+        img.thumbnail(target_size)
+        # Сохраняем сжатое изображение
+        img.save(output_path)
 
 
 if __name__ == "__main__":

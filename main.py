@@ -5,12 +5,18 @@ from datetime import datetime
 
 def sorted_date(path_to_dir, path_to_table, wb, ws):
     date_format = "%d.%m.%y"
-
+    # получаем список .xlsx документов
     table_list = [table for table in os.listdir(path_to_dir) if '.xlsx' in table and '~$' not in table]
-    date_table_list_ = [
-        (table, table.split('(')[1].replace(").xlsx", '').replace(" ", '')) for table in table_list]
 
-    date_string_list = [table.split('(')[1].replace(").xlsx", '').replace(" ", '') for table in table_list]
+    list_remote_work = [table for table in table_list if 'Д' in table]
+    clean_table_list = [table.replace("Д", '') for table in table_list]
+
+    # получаем список кортежей вида [(таблица.xlsx, день.месяц.год), ...,  (..., ...)]
+    date_table_list_ = [(table, table.split('(')[1].replace("Д", '').replace(").xlsx", '').replace(" ", ''))
+                        for table in clean_table_list]
+    # получаем список дат вида [день.месяц.год1, ..., день.месяц.годN]
+    date_string_list = [table.split('(')[1].replace(").xlsx", '').replace(" ", '') for table in clean_table_list]
+    # приводим date_string_list к списку объектов datetime
     date_list = [datetime.strptime(date_string, date_format).date() for date_string in date_string_list]
 
     sorted_date_list = sorted(date_list)
@@ -71,7 +77,8 @@ def table_counter(path, employee_):
         ws = wb.active
 
         rows_num = card_count(ws, table)
-        row_in_accounting_table = date_list.index(table.split('(')[1].replace(").xlsx", '').replace(" ", '')) + 2
+        # clean_table_list = [table.replace("Д", '') for table in table_list]
+        row_in_accounting_table = date_list.index(table.replace("Д", '').split('(')[1].replace(").xlsx", '').replace(" ", '')) + 2
 
         cell = ws_cnt.cell(row=row_in_accounting_table, column=2).value
         if cell:
