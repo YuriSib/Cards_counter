@@ -14,8 +14,12 @@ def line_breaks(dir_path_):
         have_to_desc = False
         for col in ws.iter_cols(min_row=1, max_row=1, values_only=True):
             col_num += 1
-            if 'писание' in col[0]:
-                have_to_desc = True
+            try:
+                if 'писание' in col[0]:
+                    have_to_desc = True
+                    break
+            except TypeError:
+                print(f'Программа не смогла прочитать файл {table}')
                 break
         if not have_to_desc:
             continue
@@ -23,10 +27,18 @@ def line_breaks(dir_path_):
         max_row = ws.max_row
         for row in range(2, max_row+1):
             old_value = ws.cell(row=row, column=col_num+1).value
+
             if not old_value:
                 continue
-            new_value = old_value.replace('•', ' <br> •')
-            new_value = new_value[5:]
+            new_value = old_value.replace('•', ' <br> •').replace('<br>  <br> •', ' <br> •')
+
+            letter_idx = 0
+            for letter in new_value:
+                if letter == ' ' or letter == '<' or letter == 'b' or letter == 'r' or letter == '>':
+                    letter_idx += 1
+                else:
+                    break
+            new_value = new_value[letter_idx:]
             # new_value = old_value[1:]
             ws.cell(row=row, column=col_num+1).value = new_value
 
